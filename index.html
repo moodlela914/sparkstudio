@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>任務 vs. Workspace Studio 互動簡報預覽 | 紅焰教學</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ==========================================
+       Google Material Design 3 色彩與基礎變數
+       ========================================== */
+    :root {
+      --g-blue: #4285F4;
+      --g-red: #EA4335;
+      --g-yellow: #FBBC05;
+      --g-green: #34A853;
+      --g-bg: #F8F9FA;
+      --g-surface: #FFFFFF;
+      --g-text: #202124;
+      --g-border: #DADCE0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+      background-color: var(--g-bg);
+      color: var(--g-text);
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Google 四色頂部裝飾條 */
+    .google-color-bar {
+      height: 6px;
+      background: linear-gradient(90deg, 
+        var(--g-blue) 0%, var(--g-blue) 25%, 
+        var(--g-red) 25%, var(--g-red) 50%, 
+        var(--g-yellow) 50%, var(--g-yellow) 75%, 
+        var(--g-green) 75%, var(--g-green) 100%);
+    }
+
+    /* 卡片與懸浮動畫 */
+    .g-card {
+      background: var(--g-surface);
+      border: 1px solid var(--g-border);
+      border-radius: 20px;
+      box-shadow: 0 1px 3px rgba(60,64,67,0.08), 0 4px 12px rgba(60,64,67,0.05);
+      transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.25s cubic-bezier(0.2, 0, 0, 1);
+    }
+    .g-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(60,64,67,0.12);
+    }
+
+    /* 簡報投影片進場動畫 */
+    @keyframes slideFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .slide-animate {
+      animation: slideFadeIn 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
+    }
+
+    /* 模擬器節點高亮動畫 */
+    .sim-active-node {
+      box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.4);
+      transform: scale(1.02);
+    }
+
+    /* 響應式 Media Queries */
+    @media (max-width: 768px) {
+      .hero-title { font-size: 1.65rem !important; line-height: 2.2rem !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+  <!-- 頂部 Google 經典四色條 -->
+  <div class="google-color-bar sticky top-0 z-50"></div>
+
+  <!-- 頂部導覽列 Header -->
+  <header class="bg-white/95 backdrop-blur-md border-b border-gray-200 sticky top-[6px] z-40 px-4 lg:px-8 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <!-- 左側品牌標誌 -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm">
+          <span class="text-xl font-black" style="background: linear-gradient(135deg, #4285F4, #EA4335, #FBBC05, #34A853); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">G</span>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="font-bold text-gray-900 text-base sm:text-lg tracking-tight">Google AI 雙引擎架構解析</h1>
+            <span class="px-2.5 py-0.5 text-xs font-bold bg-red-50 text-red-600 rounded-full border border-red-200">🔥 紅焰教學</span>
+          </div>
+          <p class="text-xs text-gray-500 hidden sm:block">任務 (個人自主代理) vs. Workspace Studio (企業工作流建構器)</p>
+        </div>
+      </div>
+
+      <!-- 中間快速頁籤 -->
+      <nav class="flex flex-wrap items-center gap-1 bg-gray-100 p-1 rounded-full border border-gray-200">
+        <button onclick="goToSlide(0)" class="nav-pill px-3 py-1.5 rounded-full text-xs font-bold transition-all" id="pill-0">1. 核心結論</button>
+        <button onclick="goToSlide(1)" class="nav-pill px-3 py-1.5 rounded-full text-xs font-bold transition-all" id="pill-1">2. 六維度對照</button>
+        <button onclick="goToSlide(2)" class="nav-pill px-3 py-1.5 rounded-full text-xs font-bold transition-all" id="pill-2">3. Studio 案例</button>
+        <button onclick="goToSlide(3)" class="nav-pill px-3 py-1.5 rounded-full text-xs font-bold transition-all" id="pill-3">4. 任務案例</button>
+        <button onclick="goToSlide(4)" class="nav-pill px-3 py-1.5 rounded-full text-xs font-bold transition-all" id="pill-4">5. 決策與模擬</button>
+      </nav>
+
+      <!-- 右側功能控制區 -->
+      <div class="flex items-center space-x-2">
+        <button id="viewModeBtn" onclick="toggleViewMode()" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition flex items-center space-x-1">
+          <span id="viewModeIcon">📊</span>
+          <span id="viewModeText">全覽模式</span>
+        </button>
+        <button id="soundToggleBtn" onclick="toggleSound()" class="p-2 rounded-full text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 transition" title="切換互動音效">
+          <span id="soundIcon">🔊</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主要內容區 Main Workspace -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ==========================================
+         SLIDE 0: 主視覺區與核心定位結論
+         ========================================== -->
+    <section id="slide-0" class="slide-section slide-animate" style="display: block;">
+      <div class="g-card p-6 sm:p-10 mb-6 relative overflow-hidden bg-gradient-to-br from-white via-white to-blue-50/40">
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800">Google AI 生態系比較</span>
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">校園數位轉型指南</span>
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">作者：紅焰教學</span>
+        </div>
+
+        <h2 class="hero-title text-2xl sm:text-4xl font-black text-gray-900 tracking-tight leading-tight mb-4">
+          先講結論：<span class="text-blue-600">自主數位秘書</span> vs. <span class="text-green-600">標準自動化管線</span>
+        </h2>
+        <p class="text-sm sm:text-base text-gray-600 max-w-4xl leading-relaxed mb-8">
+          在 Google 最新的 AI 版圖中，<strong>任務</strong> 與 <strong>Workspace Studio</strong> 並非互相取代，而是解決不同維度問題的雙引擎。一個負責「<strong>動態推理與跨界探索</strong>」，另一個負責「<strong>確定性規則與組織標準作業</strong>」。
+        </p>
+
+        <!-- 雙核心大型對照卡片 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- 任務 卡片 -->
+          <div class="g-card p-6 border-t-4" style="border-top-color: var(--g-blue);">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl font-bold shadow-sm">✨</div>
+                <div>
+                  <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Autonomous Personal Agent</span>
+                  <h3 class="text-xl font-black text-gray-900">任務</h3>
+                </div>
+              </div>
+              <button onclick="openLightbox(0)" class="px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition">🔍 深度圖解</button>
+            </div>
+            <p class="text-sm text-gray-700 leading-relaxed mb-4">
+              <strong>全天候自主運作的個人 AI 代理</strong>。核心在於「<strong>目標導向（Goal-Driven）與動態推理</strong>」，像一位能跨本機（macOS/Chrome）與雲端、自己拆解步驟並替你辦事的「<strong>全能水電工</strong>」。
+            </p>
+            <div class="bg-gray-50 rounded-xl p-3.5 border border-gray-100 space-y-2 text-xs text-gray-600">
+              <div class="flex items-center space-x-2"><span class="text-blue-500 font-bold">●</span><span><strong>運作模式：</strong>目標規劃 (Planning) ➔ 工具調用 ➔ 反思修正</span></div>
+              <div class="flex items-center space-x-2"><span class="text-blue-500 font-bold">●</span><span><strong>最適合情境：</strong>非例行、多變數、跨環境的綜合研究與交辦事項</span></div>
+            </div>
+          </div>
+
+          <!-- Workspace Studio 卡片 -->
+          <div class="g-card p-6 border-t-4" style="border-top-color: var(--g-green);">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center text-2xl font-bold shadow-sm">⚙️</div>
+                <div>
+                  <span class="text-xs font-bold uppercase tracking-wider text-green-600">No-Code Workflow Builder</span>
+                  <h3 class="text-xl font-black text-gray-900">Google Workspace Studio</h3>
+                </div>
+              </div>
+              <button onclick="openLightbox(1)" class="px-3 py-1.5 text-xs font-bold text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition">🔍 深度圖解</button>
+            </div>
+            <p class="text-sm text-gray-700 leading-relaxed mb-4">
+              <strong>企業級無程式碼流程自動化平台</strong>。核心在於「<strong>規則觸發（Rule-Based）與確定性管線</strong>」，像一套在處室與團隊內部鋪設好「若 A 發生則執行 B」的「<strong>自動化水管</strong>」。
+            </p>
+            <div class="bg-gray-50 rounded-xl p-3.5 border border-gray-100 space-y-2 text-xs text-gray-600">
+              <div class="flex items-center space-x-2"><span class="text-green-500 font-bold">●</span><span><strong>運作模式：</strong>事件觸發 (Trigger) ➔ AI 節點處理 ➔ 固定動作 (Action)</span></div>
+              <div class="flex items-center space-x-2"><span class="text-green-500 font-bold">●</span><span><strong>最適合情境：</strong>高頻率、規則明確、跨人員協作的處室標準 SOP</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 1: 六大核心維度深度對照表
+         ========================================== -->
+    <section id="slide-1" class="slide-section slide-animate" style="display: none;">
+      <div class="g-card p-6 sm:p-8 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <span class="text-xs font-bold text-red-600 uppercase tracking-wider">Architecture Comparison</span>
+            <h2 class="text-2xl sm:text-3xl font-black text-gray-900 mt-1">六大核心維度深度對照</h2>
+          </div>
+          <!-- 維度篩選器 -->
+          <div class="flex flex-wrap gap-1.5 bg-gray-100 p-1 rounded-xl border border-gray-200">
+            <button onclick="filterTable('all')" id="filter-all" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-blue-600 shadow-sm transition">全部顯示</button>
+            <button onclick="filterTable('core')" id="filter-core" class="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition">核心定位與思維</button>
+            <button onclick="filterTable('tech')" id="filter-tech" class="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition">執行環境與機制</button>
+            <button onclick="filterTable('org')" id="filter-org" class="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition">團隊協同與容錯</button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-gray-200">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200 text-xs sm:text-sm font-bold text-gray-700">
+                <th class="py-4 px-5 w-1/5">比較維度</th>
+                <th class="py-4 px-5 w-2/5 text-blue-700 bg-blue-50/50">✨ 任務 (個人自主代理)</th>
+                <th class="py-4 px-5 w-2/5 text-green-700 bg-green-50/50">⚙️ Workspace Studio (工作流建構器)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 text-sm">
+              <tr class="table-row-item" data-category="core" style="display: table-row;">
+                <td class="py-4 px-5 font-bold text-gray-900 bg-gray-50/30">1. 本質定位</td>
+                <td class="py-4 px-5 text-gray-700"><strong>動態自主 Agent</strong>：理解高階目標，自行拆解子步驟並執行。</td>
+                <td class="py-4 px-5 text-gray-700"><strong>確定性 Workflow</strong>：基於事件觸發（Trigger-Action）的自動化管道。</td>
+              </tr>
+              <tr class="table-row-item" data-category="core" style="display: table-row;">
+                <td class="py-4 px-5 font-bold text-gray-900 bg-gray-50/30">2. 運作思維</td>
+                <td class="py-4 px-5 text-gray-700"><strong>Goal-Driven（目標導向）</strong>：給予「最終目標」，由它推理決定調用哪些工具。</td>
+                <td class="py-4 px-5 text-gray-700"><strong>Rule-Based + AI（規則與管線）</strong>：定義明確起點與固定的後續流向。</td>
+              </tr>
+              <tr class="table-row-item" data-category="tech" style="display: table-row;">
+                <td class="py-4 px-5 font-bold text-gray-900 bg-gray-50/30">3. 執行環境與範圍</td>
+                <td class="py-4 px-5 text-gray-700">跨雲端（Workspace）與<strong>本機環境</strong>（macOS/Chrome 自動化、本地檔案讀取、外部網頁操作）。</td>
+                <td class="py-4 px-5 text-gray-700">深度原生整合於 <strong>Google Workspace 雲端生態系</strong>（Gmail、Docs、Sheets、Drive、Chat）。</td>
+              </tr>
+              <tr class="table-row-item" data-category="tech" style="display: table-row;">
+                <td class="py-4 px-5 font-bold text-gray-900 bg-gray-50/30">4. 背景執行模式</td>
+                <td class="py-4 px-5 text-gray-700"><strong>持續性自主在背景推進</strong>（即使關閉視窗也能依排程或事件持續嘗試並回報結果）。</td>
+                <td class="py-4 px-5 text-gray-700"><strong>事件驅動執行</strong>（當滿足特定條件時觸發單次標準流程，並產出執行 Log）。</td>
+              </tr>
+              <tr class="table-row-item" data-category="org" style="display: table-row;">
+                <td class="py-4 px-5 font-bold text-gray-900 bg-gray-50/30">5. 分享與協同性</td>
+                <td class="py-4 px-5 text-gray-700">高度<strong>個人化</strong>，深度綁定個人教學脈絡、操作習慣與個人帳號授權。</td>
+                <td class="py-4 px-5 text-gray-700">具備<strong>組織共享性</strong>，可打包成標準流程範本發布給學年團隊或全校處室使用。</td>
+              </tr>
+              <tr class="table-row-item" data-category="org" style="display: table-row;">
+                <td class="py-4 px-5 font-bold text-gray-900 bg-gray-50/30">6. 容錯與適應性</td>
+                <td class="py-4 px-5 text-gray-700"><span class="px-2 py-0.5 text-xs font-bold bg-blue-100 text-blue-800 rounded">高</span> 面對非結構化目標或網頁變化，能透過 LLM 推理動態調整下一步。</td>
+                <td class="py-4 px-5 text-gray-700"><span class="px-2 py-0.5 text-xs font-bold bg-green-100 text-green-800 rounded">高穩定/低變異</span> 流程節點固定，仰賴節點內的 Gemini 進行文字提煉或分類。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 2: 案例一：Google Workspace Studio 實務流程
+         ========================================== -->
+    <section id="slide-2" class="slide-section slide-animate" style="display: none;">
+      <div class="g-card p-6 sm:p-8 mb-6 border-l-8" style="border-left-color: var(--g-green);">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-green-100 text-green-800">案例一：處室標準化作業 (SOP)</span>
+              <span class="text-xs text-gray-500 font-medium">高頻率 / 規則明確 / 跨處室協作</span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-black text-gray-900 mt-2">Google Workspace Studio：全校資訊設備報修與派工自動化</h2>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="toggleAllAccordions('studio', true)" class="px-3 py-1.5 text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">全部展開</button>
+            <button onclick="toggleAllAccordions('studio', false)" class="px-3 py-1.5 text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">全部收合</button>
+            <button onclick="openLightbox(2)" class="px-3.5 py-1.5 text-xs font-bold bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm transition">🖼️ 放大檢視管線圖</button>
+          </div>
+        </div>
+
+        <!-- Studio 手風琴步驟清單 -->
+        <div class="space-y-3">
+          <div class="border border-gray-200 rounded-xl overflow-hidden bg-white">
+            <button onclick="toggleAccordion('studio-step-1')" class="w-full px-5 py-3.5 flex items-center justify-between bg-gray-50/70 hover:bg-green-50/40 transition text-left">
+              <div class="flex items-center space-x-3">
+                <span class="w-8 h-8 rounded-lg bg-green-600 text-white font-bold text-xs flex items-center justify-center">S1</span>
+                <div>
+                  <span class="text-xs font-bold text-green-700 uppercase">Trigger 觸發事件</span>
+                  <h4 class="font-bold text-gray-900 text-sm sm:text-base">監聽「設備報修 Google Form」新回覆送出</h4>
+                </div>
+              </div>
+              <span id="icon-studio-step-1" class="text-gray-400 font-bold text-lg">▼</span>
+            </button>
+            <div id="studio-step-1" class="px-5 py-4 bg-white border-t border-gray-100 text-sm text-gray-700" style="display: block;">
+              <p class="mb-2">當校內教師提交 Google 表單時，系統即時捕捉表單欄位變數：</p>
+              <div class="flex flex-wrap gap-2">
+                <span class="px-2.5 py-1 bg-gray-100 rounded text-xs font-mono">{{報修教師姓名}}</span>
+                <span class="px-2.5 py-1 bg-gray-100 rounded text-xs font-mono">{{教室位置}}</span>
+                <span class="px-2.5 py-1 bg-gray-100 rounded text-xs font-mono">{{故障問題描述}}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl overflow-hidden bg-white">
+            <button onclick="toggleAccordion('studio-step-2')" class="w-full px-5 py-3.5 flex items-center justify-between bg-gray-50/70 hover:bg-green-50/40 transition text-left">
+              <div class="flex items-center space-x-3">
+                <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center">S2</span>
+                <div>
+                  <span class="text-xs font-bold text-blue-700 uppercase">Gemini Action 智慧分析節點</span>
+                  <h4 class="font-bold text-gray-900 text-sm sm:text-base">語意辨識緊急度與故障硬體分類（輸出標準 JSON）</h4>
+                </div>
+              </div>
+              <span id="icon-studio-step-2" class="text-gray-400 font-bold text-lg">▶</span>
+            </button>
+            <div id="studio-step-2" class="px-5 py-4 bg-white border-t border-gray-100 text-sm text-gray-700" style="display: none;">
+              <div class="bg-slate-900 text-green-400 p-3 rounded-lg font-mono text-xs overflow-x-auto">
+                { "urgency": "極高", "category": "網路", "summary": "五年級辦公室交換器異常導致斷網" }
+              </div>
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl overflow-hidden bg-white">
+            <button onclick="toggleAccordion('studio-step-3')" class="w-full px-5 py-3.5 flex items-center justify-between bg-gray-50/70 hover:bg-green-50/40 transition text-left">
+              <div class="flex items-center space-x-3">
+                <span class="w-8 h-8 rounded-lg bg-amber-500 text-white font-bold text-xs flex items-center justify-center">S3</span>
+                <div>
+                  <span class="text-xs font-bold text-amber-700 uppercase">Condition Router 條件分支路由</span>
+                  <h4 class="font-bold text-gray-900 text-sm sm:text-base">依緊急度自動分流：即時 Chat 警報 vs. 一般例行派工</h4>
+                </div>
+              </div>
+              <span id="icon-studio-step-3" class="text-gray-400 font-bold text-lg">▶</span>
+            </button>
+            <div id="studio-step-3" class="px-5 py-4 bg-white border-t border-gray-100 text-sm text-gray-700" style="display: none;">
+              <p class="text-xs sm:text-sm"><strong>分支 A（極高）：</strong>立即發送 Google Chat 警報給資訊組長。<strong>分支 B（一般）：</strong>排入例行維護表。</p>
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl overflow-hidden bg-white">
+            <button onclick="toggleAccordion('studio-step-4')" class="w-full px-5 py-3.5 flex items-center justify-between bg-gray-50/70 hover:bg-green-50/40 transition text-left">
+              <div class="flex items-center space-x-3">
+                <span class="w-8 h-8 rounded-lg bg-red-500 text-white font-bold text-xs flex items-center justify-center">S4</span>
+                <div>
+                  <span class="text-xs font-bold text-red-700 uppercase">Workspace Actions 寫入與通知</span>
+                  <h4 class="font-bold text-gray-900 text-sm sm:text-base">寫入 Sheets 總表 + 生成 Docs 派工單 + 寄發 Gmail 確認信</h4>
+                </div>
+              </div>
+              <span id="icon-studio-step-4" class="text-gray-400 font-bold text-lg">▶</span>
+            </button>
+            <div id="studio-step-4" class="px-5 py-4 bg-white border-t border-gray-100 text-sm text-gray-700" style="display: none;">
+              <p class="text-xs sm:text-sm">自動新增一列至「設備維護追蹤總表.xlsx」，套印 Google Docs 派工單，並發送含案件編號的 Gmail 給報修教師。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 3: 案例二：任務 實務流程
+         ========================================== -->
+    <section id="slide-3" class="slide-section slide-animate" style="display: none;">
+      <div class="g-card p-6 sm:p-8 mb-6 border-l-8" style="border-left-color: var(--g-blue);">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-800">案例二：跨環境自主代理運作</span>
+              <span class="text-xs text-gray-500 font-medium">多變數 / 跨本機與雲端 / 動態推理修正</span>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-black text-gray-900 mt-2">任務：跨平台擷取外部教材、比對課綱並生成備課包</h2>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="toggleAllAccordions('task', true)" class="px-3 py-1.5 text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">全部展開</button>
+            <button onclick="toggleAllAccordions('task', false)" class="px-3 py-1.5 text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">全部收合</button>
+            <button onclick="openLightbox(3)" class="px-3.5 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition">🖼️ 放大檢視代理迴圈</button>
+          </div>
+        </div>
+
+        <!-- 任務 手風琴階段清單 -->
+        <div class="space-y-3">
+          <div class="border border-gray-200 rounded-xl overflow-hidden bg-white">
+            <button onclick="toggleAccordion('task-step-1')" class="w-full px-5 py-3.5 flex items-center justify-between bg-gray-50/70 hover:bg-blue-50/40 transition text-left">
+              <div class="flex items-center space-x-3">
+                <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center">P1</span>
+                <div>
+                  <span class="text-xs font-bold text-blue-700 uppercase">Goal Decomposition 接收目標與自主拆解</span>
+                  <h4 class="font-bold text-gray-900 text-sm sm:text-base">解析單一複雜自然語言指令，動態規劃執行步驟清單</h4>
+                </div>
+              </div>
+              <span id="icon-task-step-1" class="text-gray-400 font-bold text-lg">▼</span>
+            </button>
+            <div id="task-step-1" class="px-5 py-4 bg-white border-t border-gray-100 text-sm text-gray-700" style="display: block;">
+              <p class="text-xs sm:text-sm"><strong>💬 教師指令：</strong>「幫我追蹤下週教育科技展新公佈的 3 篇 AI 教學指引，下載為本機 PDF，比對我雲端內的四年級資訊課綱，挑出 3 個教案亮點整理成簡報草稿放在備課資料夾。」</p>
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl overflow-hidden bg-white">
+            <button onclick="toggleAccordion('task-step-2')" class="w-full px-5 py-3.5 flex items-center justify-between bg-gray-50/70 hover:bg-blue-50/40 transition text-left">
+              <div class="flex items-center space-x-3">
+                <span class="w-8 h-8 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">P2</span>
+                <div>
+                  <span class="text-xs font-bold text-indigo-700 uppercase">Browser & Local Action 跨網跨機自主作業</span>
+                  <h4 class="font-bold text-gray-900 text-sm sm:text-base">背景啟動瀏覽程序、檢索外部網站並下載 PDF 至本機暫存</h4>
+                </div>
+              </div>
+              <span id="icon-task-step-2" class="text-gray-400 font-bold text-lg">▶</span>
+            </button>
+            <div id="task-step-2" class="px-5 py-4 bg-white border-t border-gray-100 text-sm text-gray-700" style="display: none;">
+              <p class="text-xs sm:text-sm">「任務」於背景自主操作瀏覽器搜尋官網公告，下載 PDF 至本機並解析核心章節結構。</p>
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl overflow-hidden bg-white">
+            <button onclick="toggleAccordion('task-step-3')" class="w-full px-5 py-3.5 flex items-center justify-between bg-gray-50/70 hover:bg-blue-50/40 transition text-left">
+              <div class="flex items-center space-x-3">
+                <span class="w-8 h-8 rounded-lg bg-amber-500 text-white font-bold text-xs flex items-center justify-center">P3</span>
+                <div>
+                  <span class="text-xs font-bold text-amber-700 uppercase">Cross-Context Reflection 跨雲端脈絡整合與反思</span>
+                  <h4 class="font-bold text-gray-900 text-sm sm:text-base">調閱 Google Drive 校內教學進度表，交叉比對中年級認知層次</h4>
+                </div>
+              </div>
+              <span id="icon-task-step-3" class="text-gray-400 font-bold text-lg">▶</span>
+            </button>
+            <div id="task-step-3" class="px-5 py-4 bg-white border-t border-gray-100 text-sm text-gray-700" style="display: none;">
+              <p class="text-xs sm:text-sm">自動過濾過於艱澀的演算法理論，鎖定符合國小四年級認知發展的「生成式 AI 繪本創作」等 3 個實作亮點。</p>
+            </div>
+          </div>
+
+          <div class="border border-gray-200 rounded-xl overflow-hidden bg-white">
+            <button onclick="toggleAccordion('task-step-4')" class="w-full px-5 py-3.5 flex items-center justify-between bg-gray-50/70 hover:bg-blue-50/40 transition text-left">
+              <div class="flex items-center space-x-3">
+                <span class="w-8 h-8 rounded-lg bg-green-600 text-white font-bold text-xs flex items-center justify-center">P4</span>
+                <div>
+                  <span class="text-xs font-bold text-green-700 uppercase">Delivery & Notification 多格式交付與主動推播</span>
+                  <h4 class="font-bold text-gray-900 text-sm sm:text-base">生成 Google Slides 簡報草稿、自動歸檔備課資料夾並推播回報</h4>
+                </div>
+              </div>
+              <span id="icon-task-step-4" class="text-gray-400 font-bold text-lg">▶</span>
+            </button>
+            <div id="task-step-4" class="px-5 py-4 bg-white border-t border-gray-100 text-sm text-gray-700" style="display: none;">
+              <p class="text-xs sm:text-sm">產出 Google Slides 存入雲端備課資料夾，並發送完成推播通知教師。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         SLIDE 4: 決策框架與「即時互動模擬器」
+         ========================================== -->
+    <section id="slide-4" class="slide-section slide-animate" style="display: none;">
+      <div class="g-card p-6 sm:p-8 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">🔥 紅焰教學・互動模擬體驗</span>
+            <h2 class="text-2xl sm:text-3xl font-black text-gray-900 mt-2">即時執行模擬器：親眼見證兩者運作差異</h2>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="runSimulation('studio')" class="px-4 py-2 rounded-xl text-xs font-bold bg-green-600 hover:bg-green-700 text-white shadow-sm transition">▶️ 模擬 Workspace Studio 報修管線</button>
+            <button onclick="runSimulation('task')" class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">▶️ 模擬「任務」自主備課代理</button>
+          </div>
+        </div>
+
+        <!-- 互動模擬器顯示面板 -->
+        <div class="bg-slate-900 text-white rounded-2xl p-5 sm:p-6 mb-6 border border-slate-700">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-red-500"></span>
+              <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+              <span class="w-3 h-3 rounded-full bg-green-500"></span>
+              <span id="simTitle" class="text-xs font-mono text-gray-300 ml-2">Terminal Ready — 請點擊上方按鈕啟動模擬</span>
+            </div>
+            <span id="simStatusBadge" class="px-2.5 py-0.5 rounded text-xs font-bold bg-slate-800 text-gray-400">待機中</span>
+          </div>
+
+          <!-- 模擬步驟視覺進度列 -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
+            <div id="sim-box-0" class="p-3 rounded-xl bg-slate-800/90 border border-slate-700 transition-all">
+              <div class="text-xs text-gray-400 font-mono" id="sim-step-label-0">STEP 1</div>
+              <div class="text-sm font-bold mt-1" id="sim-step-title-0">等待啟動...</div>
+            </div>
+            <div id="sim-box-1" class="p-3 rounded-xl bg-slate-800/90 border border-slate-700 transition-all">
+              <div class="text-xs text-gray-400 font-mono" id="sim-step-label-1">STEP 2</div>
+              <div class="text-sm font-bold mt-1" id="sim-step-title-1">等待啟動...</div>
+            </div>
+            <div id="sim-box-2" class="p-3 rounded-xl bg-slate-800/90 border border-slate-700 transition-all">
+              <div class="text-xs text-gray-400 font-mono" id="sim-step-label-2">STEP 3</div>
+              <div class="text-sm font-bold mt-1" id="sim-step-title-2">等待啟動...</div>
+            </div>
+            <div id="sim-box-3" class="p-3 rounded-xl bg-slate-800/90 border border-slate-700 transition-all">
+              <div class="text-xs text-gray-400 font-mono" id="sim-step-label-3">STEP 4</div>
+              <div class="text-sm font-bold mt-1" id="sim-step-title-3">等待啟動...</div>
+            </div>
+          </div>
+
+          <!-- 即時執行 Log 輸出區 -->
+          <div id="simLogOutput" class="bg-slate-950 rounded-xl p-4 font-mono text-xs text-green-400 h-32 overflow-y-auto space-y-1.5">
+            <div>> 系統已就緒。點擊上方「模擬 Workspace Studio」或「模擬『任務』自主備課代理」觀察底層運作差異...</div>
+          </div>
+        </div>
+
+        <!-- 3秒決策卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-amber-50/70 border border-amber-200">
+            <h4 class="font-bold text-gray-900 text-sm mb-1">🧭 1. 看「邊界與變數」</h4>
+            <p class="text-xs text-gray-600">規則固定、不容許跳步選 <strong>Workspace Studio</strong>；需跨網探索未知選 <strong>任務</strong>。</p>
+          </div>
+          <div class="p-4 rounded-xl bg-red-50/70 border border-red-200">
+            <h4 class="font-bold text-gray-900 text-sm mb-1">👥 2. 看「個人或組織」</h4>
+            <p class="text-xs text-gray-600">全處室公用標準報修選 <strong>Workspace Studio</strong>；個人備課研究選 <strong>任務</strong>。</p>
+          </div>
+          <div class="p-4 rounded-xl bg-blue-50/70 border border-blue-200">
+            <h4 class="font-bold text-gray-900 text-sm mb-1">🔄 3. 雙引擎協同串聯</h4>
+            <p class="text-xs text-gray-600">由 <strong>任務</strong> 跨網研究產出規準，再交由 <strong>Studio</strong> 監聽作業表單自動批改通知！</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 底部簡報控制列 Footer -->
+  <footer id="slideFooter" class="bg-white border-t border-gray-200 px-4 lg:px-8 py-3 sticky bottom-0 z-30">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <span class="text-xs font-bold text-gray-500">簡報進度：</span>
+        <span id="slideCounter" class="text-xs font-black px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md">1 / 5</span>
+        <span class="text-xs text-gray-400 hidden sm:inline">（支援鍵盤 ← → 方向鍵切換投影片）</span>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <button onclick="changeSlide(-1)" class="px-4 py-2 rounded-full text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 transition">← 上一頁</button>
+        <button onclick="changeSlide(1)" class="px-5 py-2 rounded-full text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">下一頁 →</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==========================================
+       進階滿版雙欄燈箱 (Lightbox Modal)
+       ========================================== -->
+  <div id="lightboxModal" onclick="handleBackdropClick(event)" class="fixed inset-0 z-50 bg-gray-900/80 backdrop-blur-sm items-center justify-center p-4 sm:p-6" style="display: none;">
+    <div class="bg-white rounded-3xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-gray-200 flex flex-col lg:flex-row">
+      
+      <!-- 左欄：視覺化架構圖解區 -->
+      <div class="lg:w-7/12 bg-slate-900 p-6 sm:p-8 flex flex-col justify-between relative overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+          <span id="lbBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30">Architecture Diagram</span>
+          <span id="lbIndexText" class="text-xs font-mono text-gray-400">1 / 4</span>
+        </div>
+
+        <div id="lbDiagramContainer" class="my-auto py-4"></div>
+
+        <div class="flex items-center justify-between pt-4 border-t border-slate-800 mt-4">
+          <button onclick="navigateLightbox(-1)" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-gray-200 transition">← 上一張</button>
+          <span class="text-xs text-gray-400 hidden sm:inline">按 Esc 關閉 / 方向鍵切換</span>
+          <button onclick="navigateLightbox(1)" class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition">下一張 →</button>
+        </div>
+      </div>
+
+      <!-- 右欄：標題與說明 -->
+      <div class="lg:w-5/12 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto bg-white">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-bold text-red-600">🔥 紅焰教學・深度圖解</span>
+            <button onclick="closeLightbox()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-sm transition">✕</button>
+          </div>
+          <h3 id="lbTitle" class="text-xl sm:text-2xl font-black text-gray-900 mb-3">標題</h3>
+          <p id="lbDesc" class="text-sm text-gray-600 leading-relaxed mb-6">說明內容</p>
+
+          <div class="border-t border-gray-200 pt-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">關鍵技術要點</h4>
+            <ul id="lbPoints" class="space-y-2 text-xs sm:text-sm text-gray-700"></ul>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
+          <span>Google Material Design 3</span>
+          <button onclick="closeLightbox()" class="font-bold text-blue-600 hover:underline">返回簡報畫面</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       原生 JavaScript 邏輯
+       ========================================== -->
+  <script>
+    var currentSlide = 0;
+    var totalSlides = 5;
+    var isAllViewMode = false;
+    var soundEnabled = true;
+    var currentLightboxIndex = 0;
+    var audioCtx = null;
+    var simTimer = null;
+
+    // Web Audio API 原生合成音效
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) {
+          var AudioContext = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AudioContext();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        var now = audioCtx.currentTime;
+        if (type === 'slide') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.exponentialRampToValueAtTime(660, now + 0.08);
+          gain.gain.setValueAtTime(0.07, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'click') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.exponentialRampToValueAtTime(820, now + 0.05);
+          gain.gain.setValueAtTime(0.05, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          osc.start(now);
+          osc.stop(now + 0.05);
+        } else if (type === 'modal') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.12);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        }
+      } catch (e) {}
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundIcon').textContent = soundEnabled ? '🔊' : '🔇';
+      if (soundEnabled) playSound('click');
+    }
+
+    // 投影片與全覽顯示切換 (嚴格使用 style.display)
+    function updateSlideDisplay() {
+      for (var i = 0; i < totalSlides; i++) {
+        var slideEl = document.getElementById('slide-' + i);
+        var pillEl = document.getElementById('pill-' + i);
+        if (isAllViewMode) {
+          slideEl.style.display = 'block';
+        } else {
+          slideEl.style.display = (i === currentSlide) ? 'block' : 'none';
+        }
+        if (pillEl) {
+          if (!isAllViewMode && i === currentSlide) {
+            pillEl.className = 'nav-pill px-3 py-1.5 rounded-full text-xs font-bold transition-all bg-blue-600 text-white shadow-sm';
+          } else {
+            pillEl.className = 'nav-pill px-3 py-1.5 rounded-full text-xs font-bold transition-all text-gray-600 hover:text-gray-900';
+          }
+        }
+      }
+      document.getElementById('slideCounter').textContent = (currentSlide + 1) + ' / ' + totalSlides;
+      document.getElementById('slideFooter').style.display = isAllViewMode ? 'none' : 'block';
+    }
+
+    function goToSlide(index) {
+      if (isAllViewMode) {
+        isAllViewMode = false;
+        document.getElementById('viewModeText').textContent = '全覽模式';
+        document.getElementById('viewModeIcon').textContent = '📊';
+      }
+      currentSlide = index;
+      playSound('slide');
+      updateSlideDisplay();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function changeSlide(delta) {
+      var nextIndex = (currentSlide + delta + totalSlides) % totalSlides;
+      goToSlide(nextIndex);
+    }
+
+    function toggleViewMode() {
+      isAllViewMode = !isAllViewMode;
+      playSound('modal');
+      document.getElementById('viewModeText').textContent = isAllViewMode ? '投影片模式' : '全覽模式';
+      document.getElementById('viewModeIcon').textContent = isAllViewMode ? '🖥️' : '📊';
+      updateSlideDisplay();
+    }
+
+    // 對照表篩選
+    function filterTable(category) {
+      playSound('click');
+      var rows = document.querySelectorAll('.table-row-item');
+      rows.forEach(function(row) {
+        var rowCat = row.getAttribute('data-category');
+        row.style.display = (category === 'all' || rowCat === category) ? 'table-row' : 'none';
+      });
+      ['all', 'core', 'tech', 'org'].forEach(function(cat) {
+        var btn = document.getElementById('filter-' + cat);
+        btn.className = (cat === category)
+          ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-blue-600 shadow-sm transition'
+          : 'px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 transition';
+      });
+    }
+
+    // 手風琴控制
+    function toggleAccordion(id) {
+      playSound('click');
+      var content = document.getElementById(id);
+      var icon = document.getElementById('icon-' + id);
+      if (content.style.display === 'none' || content.style.display === '') {
+        content.style.display = 'block';
+        if (icon) icon.textContent = '▼';
+      } else {
+        content.style.display = 'none';
+        if (icon) icon.textContent = '▶';
+      }
+    }
+
+    function toggleAllAccordions(prefix, expand) {
+      playSound('click');
+      for (var i = 1; i <= 4; i++) {
+        var content = document.getElementById(prefix + '-step-' + i);
+        var icon = document.getElementById('icon-' + prefix + '-step-' + i);
+        if (content) content.style.display = expand ? 'block' : 'none';
+        if (icon) icon.textContent = expand ? '▼' : '▶';
+      }
+    }
+
+    // 互動模擬器 (Slide 4)
+    function runSimulation(mode) {
+      if (simTimer) clearInterval(simTimer);
+      playSound('modal');
+
+      var logEl = document.getElementById('simLogOutput');
+      var badgeEl = document.getElementById('simStatusBadge');
+      var titleEl = document.getElementById('simTitle');
+      logEl.innerHTML = '';
+
+      var steps = [];
+      if (mode === 'studio') {
+        titleEl.textContent = 'Workspace Studio — 確定性報修管線執行中';
+        badgeEl.textContent = 'Rule-Based 執行中';
+        badgeEl.className = 'px-2.5 py-0.5 rounded text-xs font-bold bg-green-500/20 text-green-300';
+        steps = [
+          { label: 'TRIGGER', title: '1. 收到報修表單', log: '> [Trigger] 偵測到 Google Form 新提交：五年級辦公室網路斷線' },
+          { label: 'GEMINI NODE', title: '2. 語意分級 JSON', log: '> [Gemini] 輸出結構化判斷：{"urgency": "極高", "type": "網路"}' },
+          { label: 'ROUTER', title: '3. 條件分支分流', log: '> [Router] 符合 urgency == "極高" ➔ 觸發緊急通報分支' },
+          { label: 'ACTION', title: '4. 寫入與發送通知', log: '> [Action] 已發送 Google Chat 警報、寫入 Sheets 總表並寄出確認信！(耗時 1.8s)' }
+        ];
+      } else {
+        titleEl.textContent = '任務 — 目標導向自主代理執行中';
+        badgeEl.textContent = 'Agent Loop 推理中';
+        badgeEl.className = 'px-2.5 py-0.5 rounded text-xs font-bold bg-blue-500/20 text-blue-300';
+        steps = [
+          { label: 'PLANNING', title: '1. 目標拆解規劃', log: '> [任務代理] 接收目標：拆解為「外部檢索 ➔ 下載解析 ➔ 課綱比對 ➔ 生成簡報」4 個子步驟' },
+          { label: 'TOOL CALL', title: '2. 跨網下載 PDF', log: '> [Browser] 背景巡檢教育科技展網站，成功下載 3 份最新指引 PDF 至本機' },
+          { label: 'REFLECTION', title: '3. 課綱交叉反思', log: '> [Reflect] 比對雲端「四年級進度表」，過濾艱澀理論，提煉 3 個繪本 AI 實作活動' },
+          { label: 'DELIVERY', title: '4. 歸檔雲端並回報', log: '> [Deliver] 已自動建立 Google Slides 存入雲端備課資料夾並發送推播通知！' }
+        ];
+      }
+
+      for (var i = 0; i < 4; i++) {
+        document.getElementById('sim-step-label-' + i).textContent = steps[i].label;
+        document.getElementById('sim-step-title-' + i).textContent = steps[i].title;
+        document.getElementById('sim-box-' + i).className = 'p-3 rounded-xl bg-slate-800/90 border border-slate-700 transition-all';
+      }
+
+      var currentStep = 0;
+      simTimer = setInterval(function() {
+        if (currentStep >= 4) {
+          clearInterval(simTimer);
+          badgeEl.textContent = '執行完畢 ✓';
+          return;
+        }
+        playSound('click');
+        for (var j = 0; j < 4; j++) {
+          var box = document.getElementById('sim-box-' + j);
+          if (j === currentStep) {
+            box.className = 'p-3 rounded-xl bg-blue-900/50 border-2 border-blue-400 sim-active-node transition-all';
+          } else if (j < currentStep) {
+            box.className = 'p-3 rounded-xl bg-emerald-900/30 border border-emerald-500/40 transition-all';
+          }
+        }
+        var line = document.createElement('div');
+        line.textContent = steps[currentStep].log;
+        logEl.appendChild(line);
+        logEl.scrollTop = logEl.scrollHeight;
+        currentStep++;
+      }, 750);
+    }
+
+    // 燈箱資料與控制
+    var lightboxItems = [
+      {
+        badge: 'Autonomous Agent Architecture',
+        title: '任務：目標導向自主代理架構',
+        desc: '收到高階目標後，自動進入「目標規劃 ➔ 工具調用 ➔ 自我反思」閉環，橫跨本機環境與雲端硬碟持續推進交辦事項。',
+        points: [
+          '🧠 動態拆解：自動將模糊目標拆成可執行的子步驟。',
+          '💻 跨界執行：可操作瀏覽器、下載本機檔案並同步寫入 Google Drive。',
+          '🔄 容錯反思：若外部網站改版或資料不符課綱，會自動修正搜尋策略。'
+        ],
+        diagramHtml: '<div class="p-4 rounded-2xl bg-slate-800 border border-blue-500/30 text-xs sm:text-sm font-mono text-blue-300 space-y-2"><div>[高階目標] ➔ [自主規劃 Planning]</div><div class="pl-4">├─ 1. 調用瀏覽器工具抓取外部 PDF</div><div class="pl-4">├─ 2. 調用 Drive 工具讀取四年級課綱</div><div class="pl-4">├─ 3. 反思迴圈：篩選適合中年級認知之活動</div><div class="pl-4 text-green-300">└─ 4. 產出 Google Slides 歸檔並推播通知</div></div>'
+      },
+      {
+        badge: 'Deterministic Workflow Engine',
+        title: 'Workspace Studio：企業級確定性自動化管線',
+        desc: '以嚴謹的「事件觸發 ➔ 條件路由 ➔ 標準動作」管線，確保處室例行公事 100% 依循標準 SOP 運作。',
+        points: [
+          '⚡ 事件觸發：表單提交、收到特定郵件或排程到達時立即啟動。',
+          '🧩 內嵌 Gemini 節點：只在特定節點進行分類或萃取，絕不脫稿演出。',
+          '🏢 處室共享範本：可一鍵打包發布給全處室或學年團隊使用。'
+        ],
+        diagramHtml: '<div class="p-4 rounded-2xl bg-slate-800 border border-green-500/30 text-xs sm:text-sm font-mono text-green-300 space-y-2"><div>[Trigger: 表單送出] ➔ [Gemini 節點: 輸出 JSON]</div><div class="pl-4">├─ 分支 A (極高) ➔ 發送 Google Chat 即時警報</div><div class="pl-4">└─ 分支 B (一般) ➔ 寫入 Sheets + 生成派工單 + 寄送確認信</div></div>'
+      },
+      {
+        badge: 'Case 1 Pipeline',
+        title: '案例一完整管線：全校資訊設備報修自動化',
+        desc: '將資訊組長人工查看表單、複製貼上派工單與回信的流程，濃縮為 3 秒全自動完成的標準管線。',
+        points: [
+          '📊 零遺漏追蹤：每筆報修自動附加 AI 分類標籤寫入 Google Sheets。',
+          '📄 自動套印派工單：直接套用學校標準 Docs 範本產出派工單。',
+          '🔔 雙向透明溝通：報修教師即刻收到含案件編號的確認信。'
+        ],
+        diagramHtml: '<div class="p-4 rounded-2xl bg-slate-800 border border-slate-700 text-xs font-mono text-emerald-300 space-y-2"><div>Google Forms (報修提交)</div><div>  ↓</div><div>Gemini AI (判讀緊急度與硬體類別)</div><div>  ↓</div><div>Google Sheets (登錄總表) + Google Docs (派工單) + Gmail (通知)</div></div>'
+      },
+      {
+        badge: 'Case 2 Agent Loop',
+        title: '案例二完整迴圈：透過「任務」跨平台生成備課精華包',
+        desc: '展示「任務」如何跨越外部網站、本機暫存與雲端硬碟課綱，替教師完成前瞻教案研發。',
+        points: [
+          '🌐 外部資訊自動捕獲：於背景巡檢科技展網站並下載最新指引。',
+          '🎯 108 課綱精準對齊：讀取雲端進度表，確保符合中年級學生起點行為。',
+          '📁 雲端自動歸檔：簡報草稿直接歸檔至雲端硬碟備課資料夾。'
+        ],
+        diagramHtml: '<div class="p-4 rounded-2xl bg-slate-800 border border-slate-700 text-xs font-mono text-sky-300 space-y-2"><div>外部科技展網站 (下載 3 份 PDF 至本機)</div><div>  + 雲端硬碟 (四年級資訊課綱比對)</div><div>  ↓ (「任務」動態推理與反思)</div><div>Google Slides 備課簡報草稿 (自動歸檔至備課資料夾)</div></div>'
+      }
+    ];
+
+    function renderLightboxContent() {
+      var item = lightboxItems[currentLightboxIndex];
+      document.getElementById('lbBadge').textContent = item.badge;
+      document.getElementById('lbIndexText').textContent = (currentLightboxIndex + 1) + ' / ' + lightboxItems.length;
+      document.getElementById('lbTitle').textContent = item.title;
+      document.getElementById('lbDesc').textContent = item.desc;
+      document.getElementById('lbDiagramContainer').innerHTML = item.diagramHtml;
+
+      var pointsEl = document.getElementById('lbPoints');
+      pointsEl.innerHTML = '';
+      item.points.forEach(function(pt) {
+        var li = document.createElement('li');
+        li.className = 'p-2.5 rounded-xl bg-gray-50 border border-gray-100';
+        li.textContent = pt;
+        pointsEl.appendChild(li);
+      });
+    }
+
+    function openLightbox(index) {
+      currentLightboxIndex = index;
+      playSound('modal');
+      renderLightboxContent();
+      document.getElementById('lightboxModal').style.display = 'flex';
+    }
+
+    function closeLightbox() {
+      playSound('click');
+      document.getElementById('lightboxModal').style.display = 'none';
+    }
+
+    function navigateLightbox(delta) {
+      playSound('slide');
+      currentLightboxIndex = (currentLightboxIndex + delta + lightboxItems.length) % lightboxItems.length;
+      renderLightboxContent();
+    }
+
+    function handleBackdropClick(event) {
+      if (event.target.id === 'lightboxModal') closeLightbox();
+    }
+
+    document.addEventListener('keydown', function(event) {
+      var isModalOpen = (document.getElementById('lightboxModal').style.display === 'flex');
+      if (event.key === 'Escape' && isModalOpen) {
+        closeLightbox();
+        return;
+      }
+      if (event.key === 'ArrowRight') {
+        if (isModalOpen) navigateLightbox(1);
+        else if (!isAllViewMode) changeSlide(1);
+      } else if (event.key === 'ArrowLeft') {
+        if (isModalOpen) navigateLightbox(-1);
+        else if (!isAllViewMode) changeSlide(-1);
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', function() {
+      updateSlideDisplay();
+    });
+  </script>
+</body>
+</html>
